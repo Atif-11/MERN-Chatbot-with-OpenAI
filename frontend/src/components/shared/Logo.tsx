@@ -7,7 +7,7 @@ const Logo = () => {
     display: 'flex',
     marginRight: "auto",
     alignItems: 'center',
-    gap: '8px',
+    gap: '15px',
   }}
   >
     <Link to="/">
@@ -18,7 +18,8 @@ const Logo = () => {
             height={"30px"}
             className="image-inverted"
         />
-        <Typography sx={{
+    </Link>{" "}
+    <Typography sx={{
             display: {md: "block", sm: "none", xs: "none"},
             mr: "auto", 
             fontWeight: "800", 
@@ -26,8 +27,7 @@ const Logo = () => {
             }}
         >
           <span style={{ fontSize: "20px" }}>MERN</span>-GPT  
-        </Typography>
-    </Link>
+    </Typography>
   </div>
   
 }
