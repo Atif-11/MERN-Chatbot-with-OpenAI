@@ -1,58 +1,58 @@
 import { Avatar, Box, Button, IconButton, Typography } from "@mui/material";
-import React from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { red } from "@mui/material/colors";
 import ChatItem from "../components/chat/ChatItem";
 import { IoMdSend } from "react-icons/io";
-
-const chatMessages = [
-  {
-    role: "user",
-    content: "Can you tell me the weather forecast for tomorrow?",
-  },
-  {
-    role: "assistant",
-    content:
-      "The weather forecast for tomorrow is sunny with a high of 25°C and a low of 15°C.",
-  },
-  {
-    role: "user",
-    content: "What is the capital of France?",
-  },
-  {
-    role: "assistant",
-    content: "The capital of France is Paris.",
-  },
-  {
-    role: "user",
-    content: "Can you help me find a recipe for chocolate cake?",
-  },
-  {
-    role: "assistant",
-    content:
-      "Sure! Here is a simple recipe for chocolate cake: [link to recipe].",
-  },
-  {
-    role: "user",
-    content: "What are the latest headlines in technology?",
-  },
-  {
-    role: "assistant",
-    content:
-      "The latest headlines in technology include a major breakthrough in AI research, the launch of a new smartphone, and advancements in quantum computing.",
-  },
-  {
-    role: "user",
-    content: "How do I reset my password?",
-  },
-  {
-    role: "assistant",
-    content:
-      "To reset your password, go to the account settings, click on 'Forgot Password', and follow the instructions sent to your email.",
-  },
-];
+import { deleteUserChats, getUserChats, sendChatRequest } from "../helpers/api-communicator";
+import toast from "react-hot-toast";
+type Message = {
+  role: "user" | "assistant";
+  content: string;
+};
 const Chat = () => {
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const auth = useAuth();
+  const [chatMessages, setChatMessages] = useState<Message[]>([]);
+  const handleSubmit = async () => {
+    const content = inputRef.current?.value as string;
+    if (inputRef && inputRef.current) {
+      inputRef.current.value = "";
+    }
+    const newMessage: Message = { role: "user", content };
+    setChatMessages((prev) => [...prev, newMessage]);
+
+    // API Request to the OpenAI with User's message
+    const chatData = await sendChatRequest(content);
+    setChatMessages([...chatData.chats]);
+  };
+  const handleDeleteChats = async () => {
+    try {
+      toast.loading("Deleting your Chats", {id: "deletechats"});
+      await deleteUserChats();
+      setChatMessages([]);
+      toast.success("Deleted Chats Successfully", {id: "deletechats"});
+    } catch (error) {
+      console.log(error);
+      toast.error("Deleting chats failed!", {id: "deletechats"})
+      
+    }
+  };
+
+  useLayoutEffect(() => {
+    if (auth?.isLoggedIn && auth.user) {
+      toast.loading("Loading Chats", { id: "loadchats" });
+      getUserChats()
+        .then((data) => {
+          setChatMessages([...data.chats]);
+          toast.success("Successfully loaded chats", { id: "loadchats" });
+        })
+        .catch((err) => {
+          console.log(err);
+          toast.error("Loading Failed", { id: "loadchats" });
+        });
+    }
+  }, [auth]);
   return (
     <Box
       sx={{
@@ -102,6 +102,7 @@ const Chat = () => {
             Education, etc. Please avoid sharing personal information.
           </Typography>
           <Button
+            onClick={ handleDeleteChats }
             sx={{
               width: "200px",
               my: "auto",
@@ -137,7 +138,7 @@ const Chat = () => {
             fontWeight: 600,
           }}
         >
-          Model - GPT 3.5 Turbo
+          Model - GPT 4o Mini
         </Typography>
         <Box
           sx={{
@@ -154,6 +155,7 @@ const Chat = () => {
           }}
         >
           {chatMessages.map((chat, index) => (
+            // @ts-ignore
             <ChatItem content={chat.content} role={chat.role} key={index} />
           ))}
         </Box>
@@ -169,6 +171,7 @@ const Chat = () => {
         >
           {" "}
           <input
+            ref={inputRef}
             type="text"
             style={{
               width: "100%",
@@ -180,7 +183,10 @@ const Chat = () => {
               fontSize: "20px",
             }}
           />
-          <IconButton sx={{ ml: "auto", color: "white" }}>
+          <IconButton
+            onClick={handleSubmit}
+            sx={{ ml: "auto", color: "white" }}
+          >
             <IoMdSend />
           </IconButton>
         </div>

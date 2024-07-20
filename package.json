@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "openai": "^4.0.0",
+    "react-syntax-highlighter": "^15.5.0"
+  },
+  "devDependencies": {
+    "@types/react-syntax-highlighter": "^15.5.13"
+  }
+}
